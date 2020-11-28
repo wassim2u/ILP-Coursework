@@ -2,9 +2,11 @@ package uk.ac.ed.inf.aqmaps;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mapbox.geojson.FeatureCollection;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 //The following is used to access web server contents
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,7 +29,15 @@ public class JsonParser {
 	
 	private static final int NOTFOUNDSTATUS = 404;
 	
-
+	/*
+	 * Helper method that checks the HTTP Status code returned by the HTTP response. 
+	 * @returns True if status code is 404. 
+	 */
+	private static boolean checkResponseNotFound(int status) {
+		return status == NOTFOUNDSTATUS;
+	}
+	
+	//Helper function that returns the body content formatted as a JSON String. 
 	private static String getBodyContent(int portNumber, String path) {
 		var urlString = "http://" + serverName + ":" +portNumber + "/" + path;
 		HttpResponse<String> response = null;
@@ -72,46 +82,64 @@ public class JsonParser {
 				System.exit(0);		
 		}
 			
-		System.out.println(response.body());
-		String body = response.body();
-		var p = new Gson().fromJson(body, What3WordsDetails.class);
-		Type listType =
-				new TypeToken<ArrayList<What3WordsDetails>>(){}.getType();
-		// Use the ”fromJson(String, Type)” method
-		ArrayList<What3WordsDetails> studentList = new Gson().fromJson(body, listType);
-		System.out.println(studentList.get(0));
 		return response.body();
 	}
 	
-	/*
-	 * Helper method that checks the HTTP Status code returned by the HTTP response. 
-	 * @returns True if status code is 404. 
-	 */
 	
-	private static boolean checkResponseNotFound(int status) {
-		return status == NOTFOUNDSTATUS;
-	}
-	
-	public static String parseWhat3WordsDetails(int portNumber,String what3WordsLocation) throws IOException, InterruptedException {
+	public static What3WordsDetails parseWhat3WordsDetails(int portNumber,String what3WordsLocation) {
 		var jsonFileName = "details.json";
 		var folderName = "words";
 		var jsonFilePath = folderName + "/" + what3WordsLocation + "/" + jsonFileName;
-		return getBodyContent(portNumber, jsonFilePath);
+		String body = getBodyContent(portNumber, jsonFilePath);
+		var details = new Gson().fromJson(body, What3WordsDetails.class);
+		return details;
 	}
 	
-	public static String parseAirQualityData(int portNumber, LocalDate date) throws IOException, InterruptedException {
+	public static ArrayList<Sensor> parseAirQualityData(int portNumber, LocalDate date) {
 		var jsonFileName = "air-quality-data.json";
 		var folderName = "maps";
-		var jsonFilePath = folderName + "/" + date.getYear() + "/" + date.getMonth() + "/" + date.getDayOfMonth() + "/" + jsonFileName;
-		return getBodyContent(portNumber, jsonFilePath);
+		var monthString = Integer.toString(date.getMonthValue());
+		var dayString = Integer.toString(date.getDayOfMonth());
+		//Ensure that if a number is less than 10, we have a leading zero before it to match up the format of dates in the webserver.
+		if (isSingleDigit(date.getMonthValue())) {
+			monthString = addLeadingZero(monthString);
+		}
+		if (isSingleDigit(date.getDayOfMonth())) {
+			dayString = addLeadingZero(dayString);
+		}
+		
+		var jsonFilePath = folderName + "/" + date.getYear() + "/" + monthString + "/" + dayString + "/" + jsonFileName;
+		String body =  getBodyContent(portNumber, jsonFilePath);
+		Type listType = new TypeToken<List<Sensor>>() {}.getType();
+				// Use the ”fromJson(String, Type)” method
+				ArrayList<Sensor> sensorsData =new Gson().fromJson(body, listType);
+				
+		return sensorsData;
 	}
-	
-	public static String parseNoFlyZones(int portNumber)  {
+	//
+	public static NoFlyZone parseNoFlyZones(int portNumber)  {
 		var jsonFileName = "no-fly-zones.geojson";
 		var folderName = "buildings";
 		var jsonFilePath = folderName + "/" + jsonFileName;
-		return getBodyContent(portNumber, jsonFilePath);
+		String body =  getBodyContent(portNumber, jsonFilePath);
+		return new NoFlyZone(body);
 	}	
 	
+	/*
+	 * Add one leading zero if the number is less than 10. 
+	 * Used for parsing air quality data. This is to match the String date formats in the webserver to access the json file successfully in the maps folder.
+	 */
+	private static String addLeadingZero(String numString) {
+		if (Integer.parseInt(numString) < 10){
+			numString = "0" + numString;
+		}
+		return numString;
+	}
+	
+	//Check if it is a single digit. Used for parsing air quality data by matching up the format to access the json file needed using dates successfully.
+	private static boolean isSingleDigit(int number) {
+		return number < 10;
+	}
+		
 	
 }

@@ -14,8 +14,20 @@ public class ConfinementArea {
     final double RANGE_LONGITUDE = Math.abs(EASTERN_BOUNDARY - WESTERN_BOUNDARY); //width of the area enclosed by the boundaries
     final double RANGE_LATITUDE =  Math.abs(NORTHERN_BOUNDARY - SOUTHERN_BOUNDARY);	//height of the area enclosed by the boundaries
 	
+    
 	
+	private void checkDrone(){
+		checkWithinBoundary();
+		checkNoFlyZone();
+	}
 	
+	private void checkWithinBoundary() {
+		
+	}
+	
+	private void checkNoFlyZone() {
+		
+	}
 	
 	
 }

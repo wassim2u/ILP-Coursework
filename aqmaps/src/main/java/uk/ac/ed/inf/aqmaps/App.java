@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.aqmaps;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import com.mapbox.geojson.Point;
 
@@ -8,14 +9,13 @@ import com.mapbox.geojson.Point;
 public class App 
 {
 	private static int numberOfExpectedArguments = 7;
-
 	
 	/**
-	 * 
+	 * This function checks the number of arguments 
 	 */
 	private static void checkNumberOfArguments(String[] args) throws IllegalArgumentException{
 		if(args.length != App.numberOfExpectedArguments ) {	
-            throw new IllegalArgumentException("Expected " + App.numberOfExpectedArguments + " arguments but recieved " + args.length);
+            throw new IllegalArgumentException("Expected " + App.numberOfExpectedArguments + " arguments but received " + args.length);
             }
 		}
 	
@@ -46,20 +46,26 @@ public class App
 
     public static void main(String[] args)
     {
+    	LocalDate date; Point startPoint; int randomSeed; int portNumber; //Define these local variables
     	try {
+    		//Read arguments passed from the terminal and initialise the variables defined earlier
         	checkNumberOfArguments(args);
-        	LocalDate date = readDateFromArguments(args[0],args[1],args[2]);
-        	Point startPoint = createStartingPoint(args[3],args[4]);
-        	int randomSeed = initialiseSeed(args[5]);
-    		int portNumber = readPortNumber(args[6]);
+        	date = readDateFromArguments(args[0],args[1],args[2]);
+        	startPoint = createStartingPoint(args[3],args[4]);
+        	randomSeed = initialiseSeed(args[5]);
+    		portNumber = readPortNumber(args[6]);
+        	
+    		
+    		var p = JsonParser.parseWhat3WordsDetails(portNumber, "slips/mass/baking");
     		
     	}
     	catch(Exception e) {
 			e.printStackTrace();
 			System.out.println("To run the application, please input the following arguments:");
 			System.out.println("java -jar aqmaps.jar DD MM YY latitude longitude random_seed port_number");
-			System.exit(-1); 
-		}
-    
+			System.exit(1); 
+
+    	}
     }
+    
 }

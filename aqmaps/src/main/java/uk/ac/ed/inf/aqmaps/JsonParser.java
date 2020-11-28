@@ -1,9 +1,10 @@
 package uk.ac.ed.inf.aqmaps;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.time.LocalDate;
-
-
+import java.util.ArrayList;
 //The following is used to access web server contents
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,6 +14,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 
 //Exceptions Libraries
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.ConnectException;
 
 
@@ -62,7 +64,7 @@ public class JsonParser {
 		}
 		
 		
-		//TODO: Check what you should do in case Status code is 404. Check if there are any status codes you need 
+		//TODO: Check what you should do in case Status code is 404. Check if there are any status codes you need. Should you throw errors?
 		if ( checkResponseNotFound(response.statusCode()) ) {
 				System.out.println("Status: 404 [Not Found]");
 				System.out.println("File Not Found. Check the URL path for any spelling mistakes.");
@@ -72,6 +74,12 @@ public class JsonParser {
 			
 		System.out.println(response.body());
 		String body = response.body();
+		var p = new Gson().fromJson(body, What3WordsDetails.class);
+		Type listType =
+				new TypeToken<ArrayList<What3WordsDetails>>(){}.getType();
+		// Use the ”fromJson(String, Type)” method
+		ArrayList<What3WordsDetails> studentList = new Gson().fromJson(body, listType);
+		System.out.println(studentList.get(0));
 		return response.body();
 	}
 	

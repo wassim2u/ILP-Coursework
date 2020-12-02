@@ -60,20 +60,18 @@ public class DroneControl {
 						currNode = currNode.getParent();
 						path.add(0,currNode.getPointCoordinates());
 					}
-					return path;
+					return path;	
+			}
+			List<Point> nextPossiblePoints = findNextPossibleMoves(currNode.getPointCoordinates());
+			for (Point coord: nextPossiblePoints) {
+				var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
+				var NeighbourNode = new Node(coord,currNode,neighbourCost);
+				if (!searchNeighborInList(open,NeighbourNode) && !(searchNeighborInList(closed,NeighbourNode))){
+					open.add(0,NeighbourNode);
+				}
 				
 			}
-			else {
-				List<Point> nextPossiblePoints = findNextPossibleMoves(currNode.getPointCoordinates());
-				for (Point coord: nextPossiblePoints) {
-					var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
-					var NeighbourNode = new Node(coord,currNode,neighbourCost);
-					if (!searchNeighborInList(open,NeighbourNode) && !(searchNeighborInList(closed,NeighbourNode))){
-						open.add(0,NeighbourNode);
-					}
-					
-				}
-			}
+			
 			
 		}
 		//TODO: Handle null pls thnx
@@ -150,7 +148,11 @@ public class DroneControl {
 	}
 	
 	
-
+	//Create a new Filepath: 
+	private void recordTheLogPathing() {
+		
+	}
+	
 
 	
 

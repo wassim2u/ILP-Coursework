@@ -65,8 +65,13 @@ public class App
 			//TODO: CHECK STARTING POINT COORDINATES IF RIGHT OR WRONG. CHECK NOFLYZONES OR SOMETHING
 			latitude= Double.parseDouble(latString);
 			longitude = Double.parseDouble(longString);
+			if (! NoFlyZone.checkWithinBoundary(Point.fromLngLat(longitude, latitude))) {
+				//TODO: please write more message.
+				throw new IllegalArgumentException("Invalid Starting Point - Outside the drone confinement area");
+			}
 		}
 		catch(Exception e){
+			System.out.println(e);
 			System.out.println("Please pass latitude and longitude values in the correct format as numbers.");
 			exitArgumentError();
 		}
@@ -139,14 +144,20 @@ public class App
     	//Testing
 		
 		RoutePlanner t = new RoutePlanner(App.getStartPoint(),listOfSensors);
-    	t.twoOpt();
-    	System.out.println(Arrays.toString(t.generateRoute().toArray()));
+    	System.out.println(Arrays.toString(t.generateRoute()));
     	System.out.println(t.calculateTourCost(t.gettourIndex()));
+    	
+    	
+    	
 //    	//Parse Information from the webserver to the respective class objects from Json/GeoJson Strings.
 		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
 		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
-    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);    	
-    	var path = drone.returnCompletePath();
+    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
+    	DroneControl dControl = new DroneControl(drone);
+    	var path = dControl.findPath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
+    	
+
+//    	var path = drone.returnCompletePath();
     	for (Point p : path) {
     		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
     	}

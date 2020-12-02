@@ -14,6 +14,7 @@ public class DroneControl {
 	private Point[] possibleMoveSets; 
 	private Drone drone;
 	private List<Point> path;
+	private List<Integer> directions;
 	
 	
 	
@@ -22,16 +23,19 @@ public class DroneControl {
 		this.drone = drone; 
 		initiatePossibleMoveSets();
 		path = new ArrayList<Point>();
+		directions = new ArrayList<Integer>();
+
 	}
 	
 	//TODO: Try catch null error if it ever happens findPath
 	//TODO: You cannot take a reading even if within range from the getgo. Make sure it moves first before
 	//takes the reading;
 	
-	public List<Point> findPath(Point startCoords, Point targetCoords) {
-		initaliseNewPath();
+	public void generatePath(Point startCoords, Point targetCoords) {
+		initaliseNewPathing();
 		var open = new ArrayList<Node>();
 		var closed = new ArrayList<Node>();
+		var foundPathSuccessfully = false;
 		
 		Node startNode = new Node(startCoords);
 		open.add(startNode);
@@ -56,18 +60,20 @@ public class DroneControl {
 				//break; we found our solution Or we cant move anymore
 					drone.addMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
 					path.add(0,currNode.getPointCoordinates());
+					directions.add(0,currNode.getDirectionAngle());
 					while (currNode.getParent() !=null) {
 						currNode = currNode.getParent();
 						path.add(0,currNode.getPointCoordinates());
+						directions.add(0,currNode.getDirectionAngle());
 					}
-					return path;	
+					foundPathSuccessfully= true;
+					break;
+					
 			}
-			List<Point> nextPossiblePoints = findNextPossibleMoves(currNode.getPointCoordinates());
-			for (Point coord: nextPossiblePoints) {
-				var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
-				var NeighbourNode = new Node(coord,currNode,neighbourCost);
-				if (!searchNeighborInList(open,NeighbourNode) && !(searchNeighborInList(closed,NeighbourNode))){
-					open.add(0,NeighbourNode);
+			List<Node> nextPossibleNeighbours= findNextPossibleNodes(currNode.getPointCoordinates(), currNode);
+			for (Node neighbourNode: nextPossibleNeighbours) {
+				if (!searchNeighborInList(open,neighbourNode) && !(searchNeighborInList(closed,neighbourNode))){
+					open.add(0,neighbourNode);
 				}
 				
 			}
@@ -75,8 +81,9 @@ public class DroneControl {
 			
 		}
 		//TODO: Handle null pls thnx
-		System.out.println("NULL WHY IS WHYYYY");
-		return null;
+		if (!foundPathSuccessfully) {
+			System.out.println("NULL WHY IS WHYYYY");
+		}
 	} 
 	
 	//Equivalent to h(n) - Estimated cost from node n to the end point
@@ -101,9 +108,11 @@ public class DroneControl {
         
     }
 	
-	private void initaliseNewPath() {
+	private void initaliseNewPathing() {
 		path.clear();
+		directions.clear();
 	}
+	
 	
 	//Rotate for a total of 36 including 0 degrees initial state.
 	//Represents the possible directions and the change in displacements that our drone can move to.
@@ -119,19 +128,24 @@ public class DroneControl {
 		}
 	}
 	
-	private List<Point> findNextPossibleMoves(Point currentPoint) {
+	private List<Node> findNextPossibleNodes(Point currentPoint, Node currNode) {
 		var newLng = 0.0; var newLat= 0.0;
 		int index = 0;
-		var neighbours = new ArrayList<Point>();
+		int angle = 0;
+		var neighbours = new ArrayList<Node>();
 		for (Point displacement: possibleMoveSets) {
 			newLng = currentPoint.longitude() + displacement.longitude();
 			newLat = currentPoint.latitude() + displacement.latitude();
 			var newPoint = Point.fromLngLat(newLng, newLat);
 			var pathLine = new Line2D.Double(currentPoint.latitude(),currentPoint.longitude(), newLat, newLng);
 			if (drone.getOffLimitZones().checkCoordinatesWithinArea(newPoint,pathLine)) {
-				neighbours.add(Point.fromLngLat(newLng, newLat));
+				var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
+				var neighbourNode = new Node(newPoint,currNode,neighbourCost);
+				neighbourNode.setDirectionAngle(angle);
+				neighbours.add(neighbourNode);
 			}
 			index++;
+			angle+=10;
 		}
 		return neighbours;
 		
@@ -147,6 +161,16 @@ public class DroneControl {
 		return Distance.euclideanDistanceBetweenTwoPoints(curr,target) <= 0.0002;
 	}
 	
+	
+	public List<Point> getPathOfCurrentMovement(){
+		return path;
+	}
+	
+	public List<Integer> getDirectionAnglesOfCurrentPathing(){
+		return directions;
+	}
+	
+
 	
 	//Create a new Filepath: 
 	private void recordTheLogPathing() {

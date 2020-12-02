@@ -153,9 +153,10 @@ public class App
 		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
 		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
     	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
-    	DroneControl dControl = new DroneControl(drone);
-    	var path = dControl.findPath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
-    	
+//    	DroneControl dControl = new DroneControl(drone);
+//    	dControl.generatePath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
+//    	var path = dControl.getPathOfCurrentMovement();
+    	var path = drone.returnCompletePath();
 
 //    	var path = drone.returnCompletePath();
     	for (Point p : path) {

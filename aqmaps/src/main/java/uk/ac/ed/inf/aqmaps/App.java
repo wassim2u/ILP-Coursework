@@ -2,7 +2,7 @@ package uk.ac.ed.inf.aqmaps;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Arrays;
 
 import com.mapbox.geojson.Point;
 
@@ -11,6 +11,19 @@ import com.mapbox.geojson.Point;
 public class App 
 {
 	private static int numberOfExpectedArguments = 7;
+	private static LocalDate date;
+	private static Point startPoint;
+	private static int randomSeed;
+	private static int portNumber; //accessed statically
+
+	
+	private App(String[] args) {
+		  date = readDateFromArguments(args[0],args[1],args[2]);
+	      startPoint = createStartingPoint(args[3],args[4]);
+	      randomSeed = initialiseSeed(args[5]);
+	      portNumber = readPortNumber(args[6]);
+	      
+	}
 	
 	/**
 	 * This function checks the number of arguments and would exit the program if the number is not equal to the value defined at the 
@@ -49,6 +62,7 @@ public class App
 	private static Point createStartingPoint (String latString, String longString) {
 		double latitude =0.0 , longitude = 0.0;
 		try {
+			//TODO: CHECK STARTING POINT COORDINATES IF RIGHT OR WRONG. CHECK NOFLYZONES OR SOMETHING
 			latitude= Double.parseDouble(latString);
 			longitude = Double.parseDouble(longString);
 		}
@@ -73,7 +87,7 @@ public class App
 	}
 	
 	private static int readPortNumber(String portString) {
-    	int port = 8080;
+    	int port = 80;
 		try {
 	    	port = Integer.parseInt(portString);
     	}
@@ -93,24 +107,54 @@ public class App
 		System.exit(1); 
 	}
 	
+	public static LocalDate getDate() {
+		return date;
+	}
+	public static Point getStartPoint() {
+		return startPoint;
+	}
+	public static int randomSeed() {
+		return randomSeed;
+	}
+	
+	public static int getPortNumber() {
+		return portNumber;
+	}
+	
 
     public static void main(String[] args)
     {
-    
+    	//Initialisation Phase: Check the arguments are in the correct format and initialise the variables.
         checkNumberOfArguments(args); 
-        LocalDate date = readDateFromArguments(args[0],args[1],args[2]);
-        Point startPoint = createStartingPoint(args[3],args[4]);
-        int randomSeed = initialiseSeed(args[5]);
-    	int portNumber = readPortNumber(args[6]);
+        App app = new App(args);
+        
+    	//Parse data from webserver that contains information on the location of the sensors we have to visit on that day
+		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber(), app.getDate());
+
+    	//Initialise a new Drone object, by passing in the starting location and the list of sensors to visit.
+//    	Drone drone = new Drone(app.startPoint, listOfSensors, no);    	
+    	
+    	
     	
     	//Testing
-    		
-		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(portNumber, "slips/mass/baking"); 
-		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(portNumber); 
-		List<Sensor> listOfSensors = JsonParser.parseAirQualityData(portNumber, date);
-
-    		
+		
+		RoutePlanner t = new RoutePlanner(App.getStartPoint(),listOfSensors);
+    	t.twoOpt();
+    	System.out.println(Arrays.toString(t.generateRoute().toArray()));
+    	System.out.println(t.calculateTourCost(t.gettourIndex()));
+//    	//Parse Information from the webserver to the respective class objects from Json/GeoJson Strings.
+		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
+		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
+    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);    	
+    	var path = drone.returnCompletePath();
+    	for (Point p : path) {
+    		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
+    	}
+    	System.out.println(drone.getNumberOfMoves());
     	
+    	
+    
+       
     }
     
 }

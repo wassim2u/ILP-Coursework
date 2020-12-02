@@ -89,13 +89,19 @@ public class JsonParser {
 	public static What3WordsDetails parseWhat3WordsDetails(int portNumber,String what3WordsLocation) {
 		var jsonFileName = "details.json";
 		var folderName = "words";
-		var jsonFilePath = folderName + "/" + what3WordsLocation + "/" + jsonFileName;
+		var w3wPath = changeLocationFormatToFilePath(what3WordsLocation);
+		var jsonFilePath = folderName + "/" + w3wPath + "/" + jsonFileName;
 		String body = getBodyContent(portNumber, jsonFilePath);
 		var details = new Gson().fromJson(body, What3WordsDetails.class);
 		return details;
 	}
 	
-	public static ArrayList<Sensor> parseAirQualityData(int portNumber, LocalDate date) {
+	//Removes the dots in the String to a forward slash to represent the format of a file path for our webserver
+	private static String changeLocationFormatToFilePath(String w3w) {
+		 return w3w.replace('.', '/');
+	}
+	
+	public static Sensor[] parseAirQualityData(int portNumber, LocalDate date) {
 		var jsonFileName = "air-quality-data.json";
 		var folderName = "maps";
 		var monthString = Integer.toString(date.getMonthValue());
@@ -110,9 +116,9 @@ public class JsonParser {
 		
 		var jsonFilePath = folderName + "/" + date.getYear() + "/" + monthString + "/" + dayString + "/" + jsonFileName;
 		String body =  getBodyContent(portNumber, jsonFilePath);
-		Type listType = new TypeToken<List<Sensor>>() {}.getType();
+		Type listType = new TypeToken<Sensor[]>() {}.getType();
 				// Use the ”fromJson(String, Type)” method
-				ArrayList<Sensor> sensorsData =new Gson().fromJson(body, listType);
+				Sensor[] sensorsData =new Gson().fromJson(body, listType);
 				
 		return sensorsData;
 	}

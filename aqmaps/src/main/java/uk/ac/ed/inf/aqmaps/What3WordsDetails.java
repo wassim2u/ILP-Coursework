@@ -1,33 +1,40 @@
 package uk.ac.ed.inf.aqmaps;
 
+//TODO: Set getters and change access modifiers to private
+
 public class What3WordsDetails {
 	
 	String country;
-	W3WSquare Square;
+	W3WSquare square;
 	String nearestPlace;
-	Coordinates buildingCoordinates;
-	String threeWords; 
+	private Coordinates coordinates; 
+	String words; 
 	String language;
-	String mapURL;
+	String map;
 	
 	
 	public static class W3WSquare{
-		SouthWestPoint SWPoint;
-		NorthEastPoint NEPoint;
+		SouthWestPoint southwest;
+		NorthEastPoint northeast;
 		
 		public static class SouthWestPoint{
-			double longitude;
-			double latitude;
+			double lng;
+			double lat;
 		}
 		private class NorthEastPoint{
-			double longitude;
-			double latitude;
+			double lng;
+			double lat;
 		}
 	}
 	
 	public static class Coordinates{
-		double longitude;
-		double latitude;
+		double lng;
+		double lat;
+	}
+	
+	//Getters and Setters
+	public Coordinates getCoordinates() {
+		return coordinates;
 	}
 	
 	

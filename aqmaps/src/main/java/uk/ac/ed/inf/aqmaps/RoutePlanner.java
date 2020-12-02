@@ -1,6 +1,5 @@
 package uk.ac.ed.inf.aqmaps;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,24 +16,23 @@ import com.mapbox.geojson.Point;
 public class RoutePlanner {
 	//Stores the distances from one sensor to another
 	public double[][] distances; 
-	public final int TOUR_LENGTH_EXCLUDING_RETURN;
-	public List<Integer> tourIndex; 
+	public final int TOUR_LENGTH;
+	public int[] tourIndex; 
 	
 	//Construct a graph representing the distances from one sensor to another
 	public RoutePlanner(Point start, Sensor[] listOfSensors) {
 		//Initialise tour to be the order of sensors passed originally. We will modify this to give the best tour
 		//Include an arbitrary null sensor at Index 0 to represent the starting point
-		//TODO: Meaningful comments. Have sensorNumber instead of i for example.
-		TOUR_LENGTH_EXCLUDING_RETURN = listOfSensors.length + 1;
-		tourIndex = new ArrayList<Integer>(TOUR_LENGTH_EXCLUDING_RETURN);
-		for (int i=0;i<TOUR_LENGTH_EXCLUDING_RETURN;i++) {
-			tourIndex.add(i);
+		TOUR_LENGTH = listOfSensors.length + 1;
+		tourIndex = new int[TOUR_LENGTH];
+		for (int i=0;i<TOUR_LENGTH;i++) {
+			tourIndex[i] = i;
 		}
 		
 		//Initialise a 2D array to store the distances as an adjacency matrix.
-		distances = new double[TOUR_LENGTH_EXCLUDING_RETURN][TOUR_LENGTH_EXCLUDING_RETURN];
+		distances = new double[TOUR_LENGTH][TOUR_LENGTH];
 		
-		for (int i=0; i< TOUR_LENGTH_EXCLUDING_RETURN; i++){
+		for (int i=0; i< TOUR_LENGTH; i++){
 			Point currCoordinates;
 			if (i ==0) {
 				currCoordinates = start;
@@ -62,14 +60,16 @@ public class RoutePlanner {
 		}
 	}
 	
-	public double calculateTourCost(List<Integer> tour) {
+	//[10, 8, 9, 27, 20, 31, 32, 18, 14, 12, 23, 4, 15, 19, 16, 2, 26, 17, 7, 11, 22, 21, 13, 3, 30, 25, 6, 1, 0, 28, 5, 29, 24]
+
+	public double calculateTourCost(int[] tour) {
 		var cost = 0.0; 
-		for (int i=0; i<TOUR_LENGTH_EXCLUDING_RETURN-1;i++) {
-			var current = tour.get(i);
-			var to = tour.get(i+1);
+		for (int i=0; i<TOUR_LENGTH-1;i++) {
+			var current = tour[i];
+			var to = tour[i+1];
 			cost += distances[current][to];
 		}
-		cost += distances[tour.get(TOUR_LENGTH_EXCLUDING_RETURN-1)][tour.get(0)];
+		cost += distances[tour[TOUR_LENGTH-1]][tour[0]];
 		return cost;
 	}
 	
@@ -78,12 +78,12 @@ public class RoutePlanner {
 		while (improved==true){
 			improved = false;
 			var originalDistance = calculateTourCost(tourIndex);
-			for (int m =1; m<TOUR_LENGTH_EXCLUDING_RETURN-1; m++) {
-				for (int n= m+1; n<TOUR_LENGTH_EXCLUDING_RETURN; n++) {
+			for (int m =1; m<TOUR_LENGTH-1; m++) {
+				for (int n=m+1; n<TOUR_LENGTH; n++) {
 					var newRoute = attemptReverseRoute(m,n);
 					var newDistance = calculateTourCost(newRoute);
 					if (newDistance < originalDistance){
-						tourIndex = newRoute;
+						tourIndex = newRoute.clone();
 						improved = true;
 					}
 				}
@@ -91,15 +91,9 @@ public class RoutePlanner {
 		}
 	}
 	
-	public List<Integer> generateRoute() {
+	public int[] generateRoute() {
 		twoOpt();
-		//Create a new list and remove starting point which is not a sensor.
-		List <Integer> sensorTourSpots  = new ArrayList<Integer>();
-		for (int i = 1; i < tourIndex.size(); i++) {
-			   int val = tourIndex.get(i);//get the value
-			   sensorTourSpots.add(val-1);//subtract and set the value at the same index
-		}
-		return sensorTourSpots;
+		return tourIndex;
 	}
 	/*
 	*Consider taking the reverse route between a sensor at index m in our tour and another sensor at index n. If the cost of 
@@ -110,19 +104,19 @@ public class RoutePlanner {
 	*
 	* Note : mInd should always be less than nInd.
 	*/
-	public List<Integer> attemptReverseRoute(int mInd, int nInd) {
-		var newRoute = new ArrayList<Integer>(TOUR_LENGTH_EXCLUDING_RETURN);
+	public int[] attemptReverseRoute(int mInd, int nInd) {
+		var newRoute = new int[TOUR_LENGTH];
 		int index = 0;
 		for (int i=0; i<mInd; i++) {
-			newRoute.add(tourIndex.get(i));
+			newRoute[i] = tourIndex[i];
 			index++;
 		}
 		for (int i=nInd; i>=mInd; i--) {
-			newRoute.add(tourIndex.get(i));
+			newRoute[index] = tourIndex[i];
 			index++;
 		}
-		for (int i=nInd+1; i<TOUR_LENGTH_EXCLUDING_RETURN; i++) {
-			newRoute.add(tourIndex.get(i));
+		for (int i=nInd+1; i<TOUR_LENGTH; i++) {
+			newRoute[index] = tourIndex[i];
 			index++;
 		}
 		
@@ -135,7 +129,7 @@ public class RoutePlanner {
 
 	
 	
-	public List<Integer> gettourIndex() {
+	public int[] gettourIndex() {
 		return tourIndex;
 	}
 	

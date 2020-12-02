@@ -14,7 +14,6 @@ public class DroneControl {
 	private Point[] possibleMoveSets; 
 	private Drone drone;
 	private List<Point> path;
-	private List<Integer> directions;
 	
 	
 	
@@ -23,22 +22,20 @@ public class DroneControl {
 		this.drone = drone; 
 		initiatePossibleMoveSets();
 		path = new ArrayList<Point>();
-		directions = new ArrayList<Integer>();
 	}
 	
 	//TODO: Try catch null error if it ever happens findPath
 	//TODO: You cannot take a reading even if within range from the getgo. Make sure it moves first before
 	//takes the reading;
 	
-	public void generatePath(Point startCoords, Point targetCoords) {
-		initaliseNewPathing();
+	public List<Point> findPath(Point startCoords, Point targetCoords) {
+		initaliseNewPath();
 		var open = new ArrayList<Node>();
 		var closed = new ArrayList<Node>();
-		var pathFoundSuccessfully = false;
 		
 		Node startNode = new Node(startCoords);
 		open.add(startNode);
-		while(! open.isEmpty()) {
+		while(open.isEmpty() == false) {
 			var minDist = Double.MAX_VALUE;
 			var currNode = open.get(0);
 			var bestIndex = 0;
@@ -62,29 +59,26 @@ public class DroneControl {
 					while (currNode.getParent() !=null) {
 						currNode = currNode.getParent();
 						path.add(0,currNode.getPointCoordinates());
-						directions.add(0,currNode.getDirectionAngle());
-						
-					pathFoundSuccessfully = true;
-					break;
 					}
-					
+					return path;
 				
 			}
 			else {
-				List<Node> nextPossibleNeighbours = findNextPossibleMoves(currNode.getPointCoordinates(), currNode);
-				for (Node neighbourNode: nextPossibleNeighbours) {
-					if (!searchNeighborInList(open,neighbourNode) && !(searchNeighborInList(closed,neighbourNode))){
-						open.add(0,neighbourNode);
+				List<Point> nextPossiblePoints = findNextPossibleMoves(currNode.getPointCoordinates());
+				for (Point coord: nextPossiblePoints) {
+					var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
+					var NeighbourNode = new Node(coord,currNode,neighbourCost);
+					if (!searchNeighborInList(open,NeighbourNode) && !(searchNeighborInList(closed,NeighbourNode))){
+						open.add(0,NeighbourNode);
 					}
 					
 				}
 			}
 			
 		}
-		if (!pathFoundSuccessfully) {
-			System.out.println("NULL WHY IS WHYYYY");
-		}
 		//TODO: Handle null pls thnx
+		System.out.println("NULL WHY IS WHYYYY");
+		return null;
 	} 
 	
 	//Equivalent to h(n) - Estimated cost from node n to the end point
@@ -109,11 +103,9 @@ public class DroneControl {
         
     }
 	
-	private void initaliseNewPathing() {
+	private void initaliseNewPath() {
 		path.clear();
-		directions.clear();
 	}
-	
 	
 	//Rotate for a total of 36 including 0 degrees initial state.
 	//Represents the possible directions and the change in displacements that our drone can move to.
@@ -129,27 +121,19 @@ public class DroneControl {
 		}
 	}
 	
-	private List<Node> findNextPossibleMoves(Point currentPoint, Node currNode) {
+	private List<Point> findNextPossibleMoves(Point currentPoint) {
 		var newLng = 0.0; var newLat= 0.0;
 		int index = 0;
-		var neighbours = new ArrayList<Node>();
-		int angle =0;
+		var neighbours = new ArrayList<Point>();
 		for (Point displacement: possibleMoveSets) {
 			newLng = currentPoint.longitude() + displacement.longitude();
 			newLat = currentPoint.latitude() + displacement.latitude();
 			var newPoint = Point.fromLngLat(newLng, newLat);
 			var pathLine = new Line2D.Double(currentPoint.latitude(),currentPoint.longitude(), newLat, newLng);
 			if (drone.getOffLimitZones().checkCoordinatesWithinArea(newPoint,pathLine)) {
-				var neighbourPoint = Point.fromLngLat(newLng, newLat);
-				var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
-				var neighbourNode = new Node(neighbourPoint,currNode,neighbourCost);
-				//Set direction angle taken
-				neighbourNode.setDirectionAngle(angle);
-				neighbours.add(neighbourNode);
-
+				neighbours.add(Point.fromLngLat(newLng, newLat));
 			}
 			index++;
-			angle+=10;
 		}
 		return neighbours;
 		
@@ -165,13 +149,6 @@ public class DroneControl {
 		return Distance.euclideanDistanceBetweenTwoPoints(curr,target) <= 0.0002;
 	}
 	
-	public List<Point> getPathOfCurrentMovement(){
-		return path;
-	}
-	
-	public List<Integer> getDirectionAnglesOfCurrentPathing(){
-		return directions;
-	}
 	
 
 

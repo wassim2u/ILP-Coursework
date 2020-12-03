@@ -60,7 +60,6 @@ public class RoutePlanner {
 		}
 	}
 	
-	//[10, 8, 9, 27, 20, 31, 32, 18, 14, 12, 23, 4, 15, 19, 16, 2, 26, 17, 7, 11, 22, 21, 13, 3, 30, 25, 6, 1, 0, 28, 5, 29, 24]
 
 	public double calculateTourCost(int[] tour) {
 		var cost = 0.0; 

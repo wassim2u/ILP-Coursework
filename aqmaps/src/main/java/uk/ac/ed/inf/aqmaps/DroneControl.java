@@ -7,7 +7,7 @@ import java.util.List;
 import com.mapbox.geojson.Point;
 import java.awt.geom.Line2D;
 
-//Path Finder problem while avoiding obstacles.
+//Path Finder problem while avoiding obstacles. Bounded relaxation on A star with 1.5 epsilon
 public class DroneControl {
 	private final double MOVE_LENGTH = 0.0003; //Length of a move in degrees
 	private final int NUM_OF_DIRECTIONS = 36;
@@ -15,6 +15,7 @@ public class DroneControl {
 	private Drone drone;
 	private List<Point> path;
 	private List<Integer> directions;
+	private final double epsilon = 1.5; //Weighted A* with epsilon =1.5
 	
 	
 	
@@ -56,15 +57,18 @@ public class DroneControl {
 			}
 			open.remove(bestIndex);
 			closed.add(0,currNode);
-			if ((withinTargetRange(currNode.getPointCoordinates(),targetCoords) && notFirstMove(currNode)) || checkNumberOfMoves(currNode)) {
+			if ((withinTargetRange(currNode.getPointCoordinates(),targetCoords) && !firstMove(currNode)) || checkNumberOfMoves(currNode)) {
 				//break; we found our solution Or we cant move anymore
 					drone.addMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
 					path.add(0,currNode.getPointCoordinates());
 					directions.add(0,currNode.getDirectionAngle());
+					
+
 					while (currNode.getParent() !=null) {
 						currNode = currNode.getParent();
 						path.add(0,currNode.getPointCoordinates());
 						directions.add(0,currNode.getDirectionAngle());
+						
 					}
 					foundPathSuccessfully= true;
 					break;
@@ -88,12 +92,12 @@ public class DroneControl {
 	
 	//Equivalent to h(n) - Estimated cost from node n to the end point
 	private double heuristicFunction(Point pointA, Point endPoint) {
-		return Distance.euclideanDistanceBetweenTwoPoints(pointA,endPoint);
+		return Distance.euclideanDistanceBetweenTwoPoints(pointA,endPoint) * epsilon;
 	}
 	
-	//Edge case: If number of moves zero, we cant take 0 path. 
-	private boolean notFirstMove(Node node) {
-		return node.getMoves() !=0;
+	//Edge case: If number of moves zero, we cant take 0 path. Must move before we take reading.
+	private boolean firstMove(Node node) {
+		return node.getMoves() ==0;
 	}
 	
 	private boolean searchNeighborInList(List<Node> arr, Node node) {
@@ -148,8 +152,9 @@ public class DroneControl {
 			angle+=10;
 		}
 		return neighbours;
-		
 	}
+	
+	
 	
 	
 	private boolean checkNumberOfMoves(Node n) {

@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.aqmaps;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -112,9 +113,53 @@ public class App
 		System.exit(1); 
 	}
 	
+	public static String getYearString() {
+		return Integer.toString(date.getYear());
+	}
+	
+	public static String getMonthString() {
+		var monthString = Integer.toString(date.getMonthValue());
+
+		//Ensure that if a number is less than 10, we have a leading zero before it to match up the format of dates in the webserver.
+		if (isSingleDigit(date.getMonthValue())) {
+			monthString = addLeadingZero(monthString);
+		}
+		return monthString;
+	}
+	
+	public static String getDayString() {
+		var dayString = Integer.toString(date.getDayOfMonth());
+
+		if (isSingleDigit(date.getDayOfMonth())) {
+			dayString = addLeadingZero(dayString);
+		}
+		
+		return dayString;
+	}
+	
+	/*
+	 * Add one leading zero if the number is less than 10. 
+	 * Used for parsing air quality data. This is to match the String date formats in the webserver to access the json file successfully in the maps folder.
+	 */
+	private static String addLeadingZero(String numString) {
+		if (Integer.parseInt(numString) < 10){
+			numString = "0" + numString;
+		}
+		return numString;
+	}
+	
+
+	//Check if it is a single digit. Used for parsing air quality data by matching up the format to access the json file needed using dates successfully.
+	private static boolean isSingleDigit(int number) {
+		return number < 10;
+	}
+	
 	public static LocalDate getDate() {
 		return date;
 	}
+	
+	
+	
 	public static Point getStartPoint() {
 		return startPoint;
 	}
@@ -126,6 +171,14 @@ public class App
 		return portNumber;
 	}
 	
+	
+	public static void createNewFile(String JsonString, String filename) throws IOException {
+		FileWriter myWriter = new FileWriter(filename);
+    	myWriter.write(JsonString);
+    	myWriter.close();
+    	System.out.println("Successfully created " + filename + " file.");
+	}
+	
 
     public static void main(String[] args)
     {
@@ -134,37 +187,45 @@ public class App
         App app = new App(args);
         
     	//Parse data from webserver that contains information on the location of the sensors we have to visit on that day
-		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber(), app.getDate());
+		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber());
+
+		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
 
     	//Initialise a new Drone object, by passing in the starting location and the list of sensors to visit.
-//    	Drone drone = new Drone(app.startPoint, listOfSensors, no);    	
+    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
+    	DroneControl dControl = new DroneControl(drone);
+    	var path = drone.returnCompletePath();
+    	
+    	GeoJsonDeserialiser.createGeoJSONMapReadings(path, listOfSensors);
+
     	
     	
     	
     	//Testing
 		
-		RoutePlanner t = new RoutePlanner(App.getStartPoint(),listOfSensors);
-    	System.out.println(Arrays.toString(t.generateRoute()));
-    	System.out.println(t.calculateTourCost(t.gettourIndex()));
-    	
-    	
-    	
-//    	//Parse Information from the webserver to the respective class objects from Json/GeoJson Strings.
-		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
-		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
-    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
-//    	DroneControl dControl = new DroneControl(drone);
-//    	dControl.generatePath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
-//    	var path = dControl.getPathOfCurrentMovement();
-    	var path = drone.returnCompletePath();
-
+//		RoutePlanner t = new RoutePlanner(App.getStartPoint(),listOfSensors);
+//    	System.out.println(Arrays.toString(t.generateRoute()));
+//    	System.out.println(t.calculateTourCost(t.gettourIndex()));
+//    	
+//    	
+//    	
+////    	//Parse Information from the webserver to the respective class objects from Json/GeoJson Strings.
+//		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
+//		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
+//    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
+////    	DroneControl dControl = new DroneControl(drone);
+////    	dControl.generatePath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
+////    	var path = dControl.getPathOfCurrentMovement();
 //    	var path = drone.returnCompletePath();
-    	for (Point p : path) {
-    		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
-    	}
-    	System.out.println(drone.getNumberOfMoves());
-    	
-    	
+//
+////    	var path = drone.returnCompletePath();
+////    	for (Point p : path) {
+////    		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
+////    	}
+//    	System.out.println(path.size());
+//    	System.out.println(drone.getNumberOfMoves());
+//    	
+//    	
     
        
     }

@@ -11,6 +11,8 @@ public class Sensor {
 	private float battery;
 	private float reading;
 	private boolean needsReplacement=false;
+	private boolean visited=false;
+
 	
 	
 	
@@ -35,6 +37,11 @@ public class Sensor {
 		return reading;
 	}
 	
+	public boolean isVisited() {
+		return visited;
+	}
+	
+	
 	
 
 	public boolean getReplacementStatus() {
@@ -43,5 +50,8 @@ public class Sensor {
 	
 	public void setReplacementStatus(boolean condition) {
 		needsReplacement = condition;
+	}
+	public void setVisitedStatus(boolean visitedStatus) {
+		visited = visitedStatus;
 	}
 }

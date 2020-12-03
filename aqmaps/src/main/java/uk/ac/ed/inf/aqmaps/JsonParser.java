@@ -101,20 +101,11 @@ public class JsonParser {
 		 return w3w.replace('.', '/');
 	}
 	
-	public static Sensor[] parseAirQualityData(int portNumber, LocalDate date) {
+	public static Sensor[] parseAirQualityData(int portNumber) {
 		var jsonFileName = "air-quality-data.json";
 		var folderName = "maps";
-		var monthString = Integer.toString(date.getMonthValue());
-		var dayString = Integer.toString(date.getDayOfMonth());
-		//Ensure that if a number is less than 10, we have a leading zero before it to match up the format of dates in the webserver.
-		if (isSingleDigit(date.getMonthValue())) {
-			monthString = addLeadingZero(monthString);
-		}
-		if (isSingleDigit(date.getDayOfMonth())) {
-			dayString = addLeadingZero(dayString);
-		}
 		
-		var jsonFilePath = folderName + "/" + date.getYear() + "/" + monthString + "/" + dayString + "/" + jsonFileName;
+		var jsonFilePath = folderName + "/" + App.getYearString() + "/" + App.getMonthString() + "/" + App.getDayString() + "/" + jsonFileName;
 		String body =  getBodyContent(portNumber, jsonFilePath);
 		Type listType = new TypeToken<Sensor[]>() {}.getType();
 				// Use the ”fromJson(String, Type)” method
@@ -131,21 +122,7 @@ public class JsonParser {
 		return new NoFlyZone(body);
 	}	
 	
-	/*
-	 * Add one leading zero if the number is less than 10. 
-	 * Used for parsing air quality data. This is to match the String date formats in the webserver to access the json file successfully in the maps folder.
-	 */
-	private static String addLeadingZero(String numString) {
-		if (Integer.parseInt(numString) < 10){
-			numString = "0" + numString;
-		}
-		return numString;
-	}
 	
-	//Check if it is a single digit. Used for parsing air quality data by matching up the format to access the json file needed using dates successfully.
-	private static boolean isSingleDigit(int number) {
-		return number < 10;
-	}
 		
 	
 }

@@ -1,12 +1,18 @@
 package uk.ac.ed.inf.aqmaps;
 
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Geometry;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
+import com.mapbox.geojson.Polygon;
 
 public class GeoJsonDeserialiser {
 	
@@ -19,23 +25,33 @@ public class GeoJsonDeserialiser {
 			"Gold", 		"#ffc000",
 			"Orange", 		"#ff8000",
 			"Red-Orange", 	"#ff4000",
-			"Red", 			"#ff0000"
+			"Red", 			"#ff0000",
+			"Black",	    "#000000",
+			"Gray", 		"#aaaaaa"
 	);
 	
-	//Specified fill_opacitiy property value to add to all the features
-	private static final String FILL_OPACITY = "0.75"; 
 	
 	//Helper function to add suitable attributes
 	private static void addAppropriateProperties(Feature feat, Sensor sensor) {
-		String colourVal = mapValueToColour(sensor.getReading());
-		feat.addStringProperty("fill-opacity", FILL_OPACITY);
-		feat.addStringProperty("rgb-string", colourVal);
+		String colourVal = mapReadingToColour(sensor);
+		String symbol = mapReadingToSymbol(sensor);
+		feat.addStringProperty("marker-color", colourVal);
 		feat.addStringProperty("fill", colourVal);
+		feat.addStringProperty("location", sensor.getw3wLocation());
+		feat.addStringProperty("marker-symbol", symbol);
+
 	}
 	
 	//Helper function to assign Hex value in order to add a colour attribute
-		private static String mapValueToColour(float val) {
+		private static String mapReadingToColour(Sensor sensor) {
+			if (!sensor.isVisited()) {
+				return colourNameToHex.get("Gray");
+			}
+			if(sensor.getBattery()<10) {
+				return colourNameToHex.get("Black");
+			}
 			
+			float val = sensor.getReading();
 			if (val>=0 && val<32) {
 				return colourNameToHex.get("Green"); 
 			}
@@ -61,17 +77,70 @@ public class GeoJsonDeserialiser {
 				return colourNameToHex.get("Red"); 
 			}
 		}
+		
+		private static String mapReadingToSymbol(Sensor sensor) {
+			if(sensor.getBattery()<10) {
+				return "cross";
+			}
+			
+			float val = sensor.getReading();
+			if (val>=0 && val<128) {
+				return "lighthouse";
+			}
+			else if(val>=128 && val<256) {
+				return "danger";
+			}
+			else {
+				return "";
+			}
+
+		}
 
 	
-	public static void createLinePath(List<Point> path){
-		var linePathing = LineString.fromLngLats(path);
+	public static Feature createLinePath(List<Point> path){
+		LineString line = LineString.fromLngLats(path);
+		//Turn LineString to feature
+		Feature feat = Feature.fromGeometry((Geometry) line);
+		return feat;
 	}
 	
-	public static void markSensorsOnMap(Sensor[] listOfSensors) {
+	public static List<Feature>  markSensorsOnMap(Sensor[] listOfSensors) {
+		List<Feature> listOfFeatures = new ArrayList<>();
 		for (Sensor sensor: listOfSensors) {
 			Point sensorPoint = sensor.locateSensorCoordinates();
-			
+			//Turn Point to feature
+			Feature feat = Feature.fromGeometry((Geometry) sensorPoint);
+			//Add attributes to the feature created
+	    	addAppropriateProperties(feat, sensor);
+	    	
+	    	listOfFeatures.add(feat);
+		}
+		return listOfFeatures;
+	}
+	
+	
+	public static void createGeoJSONMapReadings(List<Point> path, Sensor[] listOfSensors) {
+		var lineFeature = createLinePath(path);
+		var features = markSensorsOnMap(listOfSensors);
+		features.add(lineFeature);
+//		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
+//		features.addAll(offLimitZones.noFlyZonesCollection.features());
+		//Turn the list of Features of the line path with the individual sensor points having appropriate properties to Json String
+		var geoJson = (FeatureCollection.fromFeatures(features)).toJson(); 
+		
+		
+    	try {
+    		var year =App.getYearString();
+    		var month =App.getMonthString();
+    		var day =App.getDayString();
+    		var filename = "readings-" + day + "-" + month + "-" + year+ ".geojson";
+			App.createNewFile(geoJson,filename);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1); //Unsuccessful termination of program
 		}
 	}
+	
+	
 	
 }

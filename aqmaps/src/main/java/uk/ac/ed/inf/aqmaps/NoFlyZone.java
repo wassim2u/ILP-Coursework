@@ -12,7 +12,7 @@ import com.mapbox.geojson.Polygon;
 
 
 public class NoFlyZone {
-	private static FeatureCollection noFlyZonesCollection;
+	public static FeatureCollection noFlyZonesCollection;
 
 	/*
 	 * The numbers describe the range of values that the latitudes and longitudes could take
@@ -38,6 +38,7 @@ public class NoFlyZone {
 		return checkWithinBoundary(lineEndPoint) && checkOutsideOffLimitAreas(linePath);  
 	}
 	
+	//Used to check starting point too hence why its static
 	public static boolean checkWithinBoundary(Point p) {
 		var latCheck = p.latitude() < NORTHERN_BOUNDARY && p.latitude() > SOUTHERN_BOUNDARY;
 		var longCheck = p.longitude() < EASTERN_BOUNDARY && p.longitude() > WESTERN_BOUNDARY;

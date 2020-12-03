@@ -63,7 +63,7 @@ public class App
 	private static Point createStartingPoint (String latString, String longString) {
 		double latitude =0.0 , longitude = 0.0;
 		try {
-			//TODO: CHECK STARTING POINT COORDINATES IF RIGHT OR WRONG. CHECK NOFLYZONES OR SOMETHING
+			//TODO: CHECK STARTING POINT COORDINATES IF RIGHT OR WRONG. CHECK NOFLYZONES 
 			latitude= Double.parseDouble(latString);
 			longitude = Double.parseDouble(longString);
 			if (! NoFlyZone.checkWithinBoundary(Point.fromLngLat(longitude, latitude))) {
@@ -172,11 +172,23 @@ public class App
 	}
 	
 	
-	public static void createNewFile(String JsonString, String filename) throws IOException {
-		FileWriter myWriter = new FileWriter(filename);
-    	myWriter.write(JsonString);
+	
+	
+	public static void createOrAppendToFile(String StringtoAdd, String filename, boolean isNewFile) throws IOException {
+		FileWriter myWriter;
+		if(isNewFile) {
+			myWriter = new FileWriter(filename);
+		}
+		else {
+			var appendToExistingFile = true;
+			myWriter = new FileWriter(filename, appendToExistingFile);
+		}
+    	myWriter.write(StringtoAdd);
     	myWriter.close();
-    	System.out.println("Successfully created " + filename + " file.");
+    	if (isNewFile) {
+        	System.out.println("Successfully created " + filename + " file.");
+    	}
+    	
 	}
 	
 
@@ -190,11 +202,11 @@ public class App
 		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber());
 
 		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
-
     	//Initialise a new Drone object, by passing in the starting location and the list of sensors to visit.
     	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
     	DroneControl dControl = new DroneControl(drone);
-    	var path = drone.returnCompletePath();
+    	boolean recordFlight = true;
+    	var path = drone.returnCompletePath(recordFlight);
     	
     	GeoJsonDeserialiser.createGeoJSONMapReadings(path, listOfSensors);
 
@@ -222,10 +234,14 @@ public class App
 ////    	for (Point p : path) {
 ////    		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
 ////    	}
-//    	System.out.println(path.size());
-//    	System.out.println(drone.getNumberOfMoves());
-//    	
-//    	
+    	
+    	System.out.println(path.size());
+    	System.out.println(drone.getCompleteDirections().size());
+    	System.out.println(drone.getCurrentNumberOfMoves());
+    	System.out.println(drone.getCurrentNumberOfMoves() +34);
+
+    	
+    	
     
        
     }

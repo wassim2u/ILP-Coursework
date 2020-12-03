@@ -2,7 +2,7 @@ package uk.ac.ed.inf.aqmaps;
 
 import com.mapbox.geojson.Point;
 
-public class Distance {
+public final class Distance {
 
 	private Distance() {
 		

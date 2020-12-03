@@ -134,7 +134,9 @@ public class GeoJsonDeserialiser {
     		var month =App.getMonthString();
     		var day =App.getDayString();
     		var filename = "readings-" + day + "-" + month + "-" + year+ ".geojson";
-			App.createNewFile(geoJson,filename);
+    		var isNewFileCreated = true;
+			App.createOrAppendToFile(geoJson,filename, isNewFileCreated);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1); //Unsuccessful termination of program

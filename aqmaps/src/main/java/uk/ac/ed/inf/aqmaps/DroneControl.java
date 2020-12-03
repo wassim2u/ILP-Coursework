@@ -59,7 +59,7 @@ public class DroneControl {
 			closed.add(0,currNode);
 			if ((withinTargetRange(currNode.getPointCoordinates(),targetCoords) && !firstMove(currNode)) || checkNumberOfMoves(currNode)) {
 				//break; we found our solution Or we cant move anymore
-					drone.addMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
+					drone.addPredictedMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
 					path.add(0,currNode.getPointCoordinates());
 					directions.add(0,currNode.getDirectionAngle());
 					
@@ -158,12 +158,12 @@ public class DroneControl {
 	
 	
 	private boolean checkNumberOfMoves(Node n) {
-		return (n.getMoves() + drone.getNumberOfMoves()) == drone.getMaximumNumberOfAllowedMoves();
+		return (n.getMoves() + drone.getCurrentNumberOfMoves()) == drone.getMaximumNumberOfAllowedMoves();
 	}
 	
 	private boolean withinTargetRange(Point curr, Point target) {
 		//distance between target and current node is less than 0.0002. If yes, return true;
-		return Distance.euclideanDistanceBetweenTwoPoints(curr,target) <= 0.0002;
+		return Distance.euclideanDistanceBetweenTwoPoints(curr,target) < 0.0002;
 	}
 	
 	

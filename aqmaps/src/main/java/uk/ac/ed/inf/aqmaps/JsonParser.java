@@ -79,7 +79,6 @@ public final class JsonParser {
 		}
 		
 		
-		//TODO: Check what you should do in case Status code is 404. Check if there are any status codes you need. Should you throw errors?
 		if ( checkResponseNotFound(response.statusCode()) ) {
 				System.out.println("Status: 404 [Not Found]");
 				System.out.println("File Not Found. Check the URL path for any spelling mistakes.");
@@ -129,7 +128,8 @@ public final class JsonParser {
 		Type listType = new TypeToken<Sensor[]>() {}.getType();
 				// Use the ”fromJson(String, Type)” method
 				Sensor[] sensorsData =new Gson().fromJson(body, listType);
-				
+		System.out.println("Retrieved the list of sensors from webserver to visit for the day.");
+
 		return sensorsData;
 	}
 	/**
@@ -142,6 +142,8 @@ public final class JsonParser {
 		var folderName = "buildings";
 		var jsonFilePath = folderName + "/" + jsonFileName;
 		String body =  getBodyContent(portNumber, jsonFilePath);
+		System.out.println("Retrieved the off Limit areas that the drone should avoid");
+
 		return new NoFlyZone(body);
 	}	
 	

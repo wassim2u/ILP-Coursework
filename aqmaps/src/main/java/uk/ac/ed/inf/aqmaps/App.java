@@ -12,7 +12,7 @@ import com.mapbox.geojson.Point;
  * Represents the application interface, and is the starting point of the program. 
  * The class is mainly used to check the argument values passed and store them for the duration of the program. 
  */
-public final class App 
+public class App 
 {
 	
 	/**
@@ -85,17 +85,15 @@ public final class App
 	 * Reads the longitude and latitude values passed and creates a new Point to encapsulate both values.
 	 * @param latString The latitude passed in the arguments
 	 * @param longString The longitude passed in the arguments
-	 * @throws IllegalArgumentException if the values given were invalid (eg. Outside the confinement area or inside one of the no fly zones). 
+	 * @throws IllegalArgumentException if the values given were invalid (eg. Outside the confinement area). 
 	 * @return Returns Point object containing the two parameters passed of longitude and latitude.
 	 */
 	private static Point createStartingPoint (String latString, String longString) {
 		double latitude =0.0 , longitude = 0.0;
 		try {
-			//TODO: CHECK STARTING POINT COORDINATES IF RIGHT OR WRONG. CHECK NOFLYZONES 
 			latitude= Double.parseDouble(latString);
 			longitude = Double.parseDouble(longString);
 			if (! NoFlyZone.checkWithinBoundary(Point.fromLngLat(longitude, latitude))) {
-				//TODO: please write more message.
 				throw new IllegalArgumentException("Invalid Starting Point - Outside the drone confinement area");
 			}
 		}
@@ -225,31 +223,32 @@ public final class App
     {
     	//Initialisation Phase: Check the arguments are in the correct format and initialise the variables.
     	checkNumOfArguments(args); 
-        App app = new App(args);
+    	date = readDateFromArguments(args[0],args[1],args[2]);
+	    startPoint = createStartingPoint(args[3],args[4]);
+	    randomSeed = initialiseSeed(args[5]);
+	    portNumber = readPortNumber(args[6]);
+        System.out.println("Received arguments successfully.");
         
     	//Parse data from webserver that contains information on the location of the sensors we have to visit on that day
-
-    	//Initialise a new Drone object, by passing in the starting location and the list of sensors to visit.
 		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber());
+    	//Parse data from webserver that contains information on the off limit areas the drone should avoid .
 		NoFlyZone restrictedAreas = JsonParser.parseNoFlyZones(App.getPortNumber()); 
 
-		
+        System.out.println("...........");
+
+		//Create a new Drone object
         Drone drone = new Drone(App.getStartPoint(), listOfSensors, restrictedAreas);
+        //Set whether to log the flight paths for this day. 
     	boolean recordFlight = true;
+    	//Return the list of path
     	List<Point> path = drone.returnCompletePath(recordFlight);
     	
+    	
+    	//Create GeoJSON readings output files, which is a map of the path of the drone with markers indicating location of sensors.
     	GeoJsonDeserialiser.createGeoJSONMapReadings(path, listOfSensors);
 
     	
-    	
-    	
- 
-    	
-    	System.out.println(path.size());
-    	System.out.println(drone.getCompleteDirections().size());
-    	System.out.println(drone.getCurrentNumberOfMoves());
-    	System.out.println(drone.getCurrentNumberOfMoves() +34);
-
+  
     	
     
        

@@ -20,10 +20,10 @@ public class RoutePlanner {
 	public int[] tourIndex; 
 	
 	//Construct a graph representing the distances from one sensor to another
-	public RoutePlanner(Point start, Sensor[] listOfSensors) {
+	public RoutePlanner(Point start, List<Point> sensorPoints) {
 		//Initialise tour to be the order of sensors passed originally. We will modify this to give the best tour
 		//Include an arbitrary null sensor at Index 0 to represent the starting point
-		TOUR_LENGTH = listOfSensors.length + 1;
+		TOUR_LENGTH = sensorPoints.size() + 1;
 		tourIndex = new int[TOUR_LENGTH];
 		for (int i=0;i<TOUR_LENGTH;i++) {
 			tourIndex[i] = i;
@@ -38,7 +38,7 @@ public class RoutePlanner {
 				currCoordinates = start;
 			}
 			else {
-				currCoordinates = listOfSensors[i-1].locateSensorCoordinates();
+				currCoordinates = sensorPoints.get(i-1);
 			}
 			for (int j=0; j<i; j++) {
 				//Calculate the distance between the two points if we are not at the same point.
@@ -48,7 +48,7 @@ public class RoutePlanner {
 						toCoordinates = start;
 					}
 					else {
-						toCoordinates= listOfSensors[j-1].locateSensorCoordinates(); 
+						toCoordinates= sensorPoints.get(j-1); 
 					}
 					//Using the coordinates parsed from the webserver using locateSensorCoordinates, calculate the distance between the two sensors.
 					var dist = Distance.euclideanDistanceBetweenTwoPoints(currCoordinates,toCoordinates);

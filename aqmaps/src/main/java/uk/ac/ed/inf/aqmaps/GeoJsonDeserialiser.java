@@ -2,7 +2,6 @@ package uk.ac.ed.inf.aqmaps;
 
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.Polygon;
 
-public class GeoJsonDeserialiser {
+public final class GeoJsonDeserialiser {
 	
 	//Map colour names to Hex values
 	private static final Map<String,String> colourNameToHex = Map.of(
@@ -120,6 +119,7 @@ public class GeoJsonDeserialiser {
 	
 	
 	public static void createGeoJSONMapReadings(List<Point> path, Sensor[] listOfSensors) {
+
 		var lineFeature = createLinePath(path);
 		var features = markSensorsOnMap(listOfSensors);
 		features.add(lineFeature);
@@ -135,7 +135,7 @@ public class GeoJsonDeserialiser {
     		var day =App.getDayString();
     		var filename = "readings-" + day + "-" + month + "-" + year+ ".geojson";
     		var isNewFileCreated = true;
-			App.createOrAppendToFile(geoJson,filename, isNewFileCreated);
+			FileUtilities.createOrAppendToFile(geoJson,filename, isNewFileCreated);
 
 		} catch (IOException e) {
 			e.printStackTrace();

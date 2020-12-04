@@ -2,11 +2,8 @@ package uk.ac.ed.inf.aqmaps;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mapbox.geojson.FeatureCollection;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+
 //The following is used to access web server contents
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -19,25 +16,33 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.ConnectException;
 
-
-public class JsonParser {
+/**
+ * Utility class that handles parsing data from the webserver from Json into appropriate Object types
+ */
+public final class JsonParser {
 	
-	//One HttpClient is created, shared between all HttpRequests.
+	/** One HttpClient is created, shared between all HttpRequests.*/
 	private static final HttpClient client = HttpClient.newHttpClient();
-	//Current Server 
+	/** Current Server name is set at the beginning. Currently called "localhost". */
 	private static String serverName = "localhost";
-	
+	/** The HTTP Response code that indicates that the server could not find the page requested. */
 	private static final int NOTFOUNDSTATUS = 404;
 	
-	/*
+	/**
 	 * Helper method that checks the HTTP Status code returned by the HTTP response. 
-	 * @returns True if status code is 404. 
+	 * @param status The response code.
+	 * @return true if status code is 404. 
 	 */
 	private static boolean checkResponseNotFound(int status) {
 		return status == NOTFOUNDSTATUS;
 	}
 	
-	//Helper function that returns the body content formatted as a JSON String. 
+	/**
+	 * Helper function that returns the body content of a JSON file formatted as a JSON String. 
+	 * @param portNumber The port number, should be equivalent to the port number that the server is in in order to have a successful connection.
+	 * @param path The file path on the webserver to retrieve the required body content.
+	 * @return Returns the Body content found from the JSON File.
+	 */
 	private static String getBodyContent(int portNumber, String path) {
 		var urlString = "http://" + serverName + ":" +portNumber + "/" + path;
 		HttpResponse<String> response = null;
@@ -85,7 +90,12 @@ public class JsonParser {
 		return response.body();
 	}
 	
-	
+	/**
+	 * Parses JSON content related to the location of a sensor and converts it to a new object of type What3WordDetails
+	 * @param portNumber The port number which the server is in.
+	 * @param what3WordsLocation The String location of the sensor, with each word separated by a dot.
+	 * @return What3WordsDetails Object with attributes conveying information about the location of a sensor.
+	 */
 	public static What3WordsDetails parseWhat3WordsDetails(int portNumber,String what3WordsLocation) {
 		var jsonFileName = "details.json";
 		var folderName = "words";
@@ -96,11 +106,20 @@ public class JsonParser {
 		return details;
 	}
 	
-	//Removes the dots in the String to a forward slash to represent the format of a file path for our webserver
+	/**
+	 * Removes the dots in the String to a forward slash to represent the format of a file path for our webserver
+	 * @param w3w The what3Words location in a dot format. 
+	 * @return A New String with the format of a file path (with forward slashes).
+	 */
 	private static String changeLocationFormatToFilePath(String w3w) {
 		 return w3w.replace('.', '/');
 	}
 	
+	/**
+	 * Parses JSON content with air quality readings of different sensors and their location and converts them to Sensor objects.
+	 * @param portNumber The port number which the server is in.
+	 * @return An array of Sensors
+	 */
 	public static Sensor[] parseAirQualityData(int portNumber) {
 		var jsonFileName = "air-quality-data.json";
 		var folderName = "maps";
@@ -113,7 +132,11 @@ public class JsonParser {
 				
 		return sensorsData;
 	}
-	//
+	/**
+	 * Parses JSON content related to Off Limit Zones, zones inside the confinement areas that the drone should not fly over .
+	 * @param portNumber The port number which the server is in.
+	 * @return A new object of type NoFlyZone
+	 */
 	public static NoFlyZone parseNoFlyZones(int portNumber)  {
 		var jsonFileName = "no-fly-zones.geojson";
 		var folderName = "buildings";

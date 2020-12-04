@@ -8,19 +8,19 @@ import com.mapbox.geojson.Point;
 import java.awt.geom.Line2D;
 
 //Path Finder problem while avoiding obstacles. Bounded relaxation on A star with 1.5 epsilon
-public class DroneControl {
+public class DronePathing{
 	private final double MOVE_LENGTH = 0.0003; //Length of a move in degrees
 	private final int NUM_OF_DIRECTIONS = 36;
 	private Point[] possibleMoveSets; 
 	private Drone drone;
 	private List<Point> path;
 	private List<Integer> directions;
-	private final double epsilon = 1.5; //Weighted A* with epsilon =1.5
+	private final double epsilon = 1.5; //Weighted A* with epsilon cost - Multiplied to the heuristic
 	
 	
 	
 	
-	public DroneControl(Drone drone) {
+	public DronePathing(Drone drone) {
 		this.drone = drone; 
 		initiatePossibleMoveSets();
 		path = new ArrayList<Point>();
@@ -28,28 +28,40 @@ public class DroneControl {
 
 	}
 	
-	//TODO: Try catch null error if it ever happens findPath
-	//TODO: You cannot take a reading even if within range from the getgo. Make sure it moves first before
-	//takes the reading;
+	private void initaliseNewPathing() {
+		path.clear();
+		directions.clear();
+	}
 	
+	
+	
+	
+	//Equivalent to h(n) - Estimated cost from node n to the end point
+	private double heuristicFunction(Point pointA, Point endPoint) {
+		return Distance.euclideanDistanceBetweenTwoPoints(pointA,endPoint) * epsilon;
+	}
+		
+	//TODO: Try catch null error if it ever happens findPath
+
 	public void generatePath(Point startCoords, Point targetCoords) {
 		initaliseNewPathing();
-		var open = new ArrayList<Node>();
-		var closed = new ArrayList<Node>();
+		var open = new ArrayList<PathNode>();
+		var closed = new ArrayList<PathNode>();
 		var foundPathSuccessfully = false;
 		
-		Node startNode = new Node(startCoords);
+		PathNode startNode = new PathNode(startCoords);
 		open.add(startNode);
 		while(open.isEmpty() == false) {
 			var minDist = Double.MAX_VALUE;
 			var currNode = open.get(0);
 			var bestIndex = 0;
 			var index = 0;
-			for (Node node: open) {
-				var totalF = node.getCostG() + heuristicFunction(node.getPointCoordinates(), targetCoords); //f(n) = g(n) + h(n)
+			for (PathNode node: open) {
+				//f(n) = g(n) + h(n)
+				var totalFScore = node.getCostG() + heuristicFunction(node.getPointCoordinates(), targetCoords); 
 				
-				if (totalF < minDist) {
-					minDist = totalF;
+				if (totalFScore < minDist) {
+					minDist = totalFScore;
 					currNode = node;
 					bestIndex = index;
 				}	
@@ -59,23 +71,13 @@ public class DroneControl {
 			closed.add(0,currNode);
 			if ((withinTargetRange(currNode.getPointCoordinates(),targetCoords) && !firstMove(currNode)) || checkNumberOfMoves(currNode)) {
 				//break; we found our solution Or we cant move anymore
-					drone.addPredictedMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
-					path.add(0,currNode.getPointCoordinates());
-					directions.add(0,currNode.getDirectionAngle());
-					
-
-					while (currNode.getParent() !=null) {
-						currNode = currNode.getParent();
-						path.add(0,currNode.getPointCoordinates());
-						directions.add(0,currNode.getDirectionAngle());
-						
-					}
+					backTrackAndStoreResults(currNode);
 					foundPathSuccessfully= true;
 					break;
 					
 			}
-			List<Node> nextPossibleNeighbours= findNextPossibleNodes(currNode.getPointCoordinates(), currNode);
-			for (Node neighbourNode: nextPossibleNeighbours) {
+			List<PathNode> nextPossibleNeighbours= findNextPossibleNodes(currNode.getPointCoordinates(), currNode);
+			for (PathNode neighbourNode: nextPossibleNeighbours) {
 				if (!searchNeighborInList(open,neighbourNode) && !(searchNeighborInList(closed,neighbourNode))){
 					open.add(0,neighbourNode);
 				}
@@ -90,18 +92,9 @@ public class DroneControl {
 		}
 	} 
 	
-	//Equivalent to h(n) - Estimated cost from node n to the end point
-	private double heuristicFunction(Point pointA, Point endPoint) {
-		return Distance.euclideanDistanceBetweenTwoPoints(pointA,endPoint) * epsilon;
-	}
 	
-	//Edge case: If number of moves zero, we cant take 0 path. Must move before we take reading.
-	private boolean firstMove(Node node) {
-		return node.getMoves() ==0;
-	}
-	
-	private boolean searchNeighborInList(List<Node> arr, Node node) {
-		for (Node n: arr) {
+	private boolean searchNeighborInList(List<PathNode> arr, PathNode node) {
+		for (PathNode n: arr) {
 			if (n.getPointCoordinates().longitude() == node.getPointCoordinates().longitude()
 	         && n.getPointCoordinates().latitude() ==node.getPointCoordinates().latitude()) {
 				return true;
@@ -111,11 +104,6 @@ public class DroneControl {
 		return false;
         
     }
-	
-	private void initaliseNewPathing() {
-		path.clear();
-		directions.clear();
-	}
 	
 	
 	//Rotate for a total of 36 including 0 degrees initial state.
@@ -132,11 +120,11 @@ public class DroneControl {
 		}
 	}
 	
-	private List<Node> findNextPossibleNodes(Point currentPoint, Node currNode) {
+	private List<PathNode> findNextPossibleNodes(Point currentPoint, PathNode currNode) {
 		var newLng = 0.0; var newLat= 0.0;
 		int index = 0;
 		int angle = 0;
-		var neighbours = new ArrayList<Node>();
+		var neighbours = new ArrayList<PathNode>();
 		for (Point displacement: possibleMoveSets) {
 			newLng = currentPoint.longitude() + displacement.longitude();
 			newLat = currentPoint.latitude() + displacement.latitude();
@@ -144,7 +132,7 @@ public class DroneControl {
 			var pathLine = new Line2D.Double(currentPoint.latitude(),currentPoint.longitude(), newLat, newLng);
 			if (drone.getOffLimitZones().checkCoordinatesWithinArea(newPoint,pathLine)) {
 				var neighbourCost = currNode.getCostG() + MOVE_LENGTH;
-				var neighbourNode = new Node(newPoint,currNode,neighbourCost);
+				var neighbourNode = new PathNode(newPoint,currNode,neighbourCost);
 				neighbourNode.setDirectionAngle(angle);
 				neighbours.add(neighbourNode);
 			}
@@ -154,10 +142,24 @@ public class DroneControl {
 		return neighbours;
 	}
 	
+	private void backTrackAndStoreResults(PathNode currNode) {
+		drone.addPredictedMoveCount(currNode.getMoves()); //Configure the number of moves we have made so far and add it to the drone.
+		path.add(0,currNode.getPointCoordinates());
+		directions.add(0,currNode.getDirectionAngle());
+		
+
+		while (currNode.getParent() !=null) {
+			currNode = currNode.getParent();
+			path.add(0,currNode.getPointCoordinates());
+			directions.add(0,currNode.getDirectionAngle());
+			
+		}
+	}
 	
 	
 	
-	private boolean checkNumberOfMoves(Node n) {
+	
+	private boolean checkNumberOfMoves(PathNode n) {
 		return (n.getMoves() + drone.getCurrentNumberOfMoves()) == drone.getMaximumNumberOfAllowedMoves();
 	}
 	
@@ -167,6 +169,13 @@ public class DroneControl {
 	}
 	
 	
+	
+	//Edge case: If number of moves zero, we cant take 0 path. Must move before we take reading.
+	private boolean firstMove(PathNode node) {
+		return node.getMoves() ==0;
+	}
+	
+
 	public List<Point> getPathOfCurrentMovement(){
 		return path;
 	}
@@ -176,11 +185,6 @@ public class DroneControl {
 	}
 	
 
-	
-	//Create a new Filepath: 
-	private void recordTheLogPathing() {
-		
-	}
 	
 
 	

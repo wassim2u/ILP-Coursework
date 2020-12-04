@@ -5,6 +5,10 @@ import com.mapbox.geojson.Point;
 import uk.ac.ed.inf.aqmaps.What3WordsDetails.Coordinates;
 
 
+/**
+ * 
+ *
+ */
 public class Sensor {
 	
 	private String location;

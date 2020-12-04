@@ -1,22 +1,35 @@
 package uk.ac.ed.inf.aqmaps;
 
-import java.io.FileWriter;
-import java.io.IOException;
+
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.List;
 
 import com.mapbox.geojson.Point;
 
 
 
-public class App 
+/**
+ * Represents the application interface, and is the starting point of the program. 
+ * The class is mainly used to check the argument values passed and store them for the duration of the program. 
+ */
+public final class App 
 {
+	
+	/**
+     * The number of arguments expected when starting the application from command line. Needs to be changed if there becomes different requirements
+	 * or if there is a need for flexibility. 
+	 */
 	private static int numberOfExpectedArguments = 7;
+	/** The date given in the arguments. Used later for accessing the list of sensors that need to be visited on a given date. */
 	private static LocalDate date;
+	 /** The starting point of the drone given in the arguments. */
 	private static Point startPoint;
+	 /** The random seed number given in the arguments. Current implementation does not make use of it as the program returns the same results. */
 	private static int randomSeed;
-	private static int portNumber; //accessed statically
-
+	 /** The port number given in the arguments. Needs to match with the webserver's port number in order to connect and parse information from it successfully. */
+	private static int portNumber;
+	
+	
 	
 	private App(String[] args) {
 		  date = readDateFromArguments(args[0],args[1],args[2]);
@@ -29,8 +42,10 @@ public class App
 	/**
 	 * This function checks the number of arguments and would exit the program if the number is not equal to the value defined at the 
 	 * variable numberOfExpectedArguments.
+	 * @param args The arguments passed in the terminal
+	 * @throws IllegalArgumentException if the number of arguments do not match up with the required number set in numberOfExpectedArguments.
 	 */
-	private static void checkNumberOfArguments(String[] args) throws IllegalArgumentException{
+	private static void checkNumOfArguments(String[] args) throws IllegalArgumentException{
 		try{
 			if(args.length != App.numberOfExpectedArguments ) {	
 				throw new IllegalArgumentException("Expected " + App.numberOfExpectedArguments + " arguments but received " + args.length);
@@ -43,7 +58,14 @@ public class App
 		
 	}
 	
-	
+	/**
+	 * Reads the date values from the arguments in the format DD MM YY.
+	 * @param dayString The day passed in the argument
+	 * @param monthString The month passed in the argument
+	 * @param yearString The year passed in the argument
+	 * @throws NumberFormatException if the program fails to parse from String to Integer if the string values given are not numbers (eg. Will accept 06, but not June). 
+	 * @return Returns LocalDate containing the three parameters passed.
+	 */
 	private static LocalDate readDateFromArguments(String dayString, String monthString, String yearString) {
 		int day = 0, month = 0, year = 0 ;
 		try{
@@ -59,7 +81,13 @@ public class App
 		return LocalDate.of(year,month,day);
 
 	}
-	
+	/**
+	 * Reads the longitude and latitude values passed and creates a new Point to encapsulate both values.
+	 * @param latString The latitude passed in the arguments
+	 * @param longString The longitude passed in the arguments
+	 * @throws IllegalArgumentException if the values given were invalid (eg. Outside the confinement area or inside one of the no fly zones). 
+	 * @return Returns Point object containing the two parameters passed of longitude and latitude.
+	 */
 	private static Point createStartingPoint (String latString, String longString) {
 		double latitude =0.0 , longitude = 0.0;
 		try {
@@ -79,7 +107,12 @@ public class App
 		return Point.fromLngLat(longitude,latitude);
 		
 	}
-	
+	/**
+	 * Reads the random seed value passed in the arguments to stores it in the program.
+	 * @param seedString the random seed value
+	 * @throws NumberFormatException if the value given were invalid (Not an integer number).
+	 * @return value of type int representing the random seed.
+	 */
 	private static int initialiseSeed(String seedString) {
     	int randomSeed = 0;
 		try {
@@ -91,7 +124,12 @@ public class App
     	}
 		return randomSeed;
 	}
-	
+	/**
+	 * Reads the port number value passed in the arguments to parse it into integer and store it in the program. 
+	 * @param portString the port number passed in the arguments. 
+	 * @throws NumberFormatException if the value given were invalid (Not an integer number).
+	 * @return value of type int representing the port number.
+	 */
 	private static int readPortNumber(String portString) {
     	int port = 80;
 		try {
@@ -106,7 +144,9 @@ public class App
 	}
 	
 
-	//Ran when the arguments passed are not in the correct format as shown in the print statement below.
+	/**
+	 * Ran when the arguments passed are not in the correct format. Notifies the user of the format to input the arguments.
+	 */
 	private static void exitArgumentError() {
 		System.out.println("To run the application, please input the following arguments:");
 		System.out.println("java -jar aqmaps.jar DD MM YY latitude longitude random_seed port_number");
@@ -122,7 +162,7 @@ public class App
 
 		//Ensure that if a number is less than 10, we have a leading zero before it to match up the format of dates in the webserver.
 		if (isSingleDigit(date.getMonthValue())) {
-			monthString = addLeadingZero(monthString);
+			monthString = addLeadingZeroToString(monthString);
 		}
 		return monthString;
 	}
@@ -131,17 +171,19 @@ public class App
 		var dayString = Integer.toString(date.getDayOfMonth());
 
 		if (isSingleDigit(date.getDayOfMonth())) {
-			dayString = addLeadingZero(dayString);
+			dayString = addLeadingZeroToString(dayString);
 		}
 		
 		return dayString;
 	}
 	
-	/*
+	/**
 	 * Add one leading zero if the number is less than 10. 
 	 * Used for parsing air quality data. This is to match the String date formats in the webserver to access the json file successfully in the maps folder.
+	 * @param numString A number in String type.
+	 * @return return the new String with a leading zero if it is a single digit. Otherwise, it returns the same String value passed in argument.
 	 */
-	private static String addLeadingZero(String numString) {
+	private static String addLeadingZeroToString(String numString) {
 		if (Integer.parseInt(numString) < 10){
 			numString = "0" + numString;
 		}
@@ -149,7 +191,11 @@ public class App
 	}
 	
 
-	//Check if it is a single digit. Used for parsing air quality data by matching up the format to access the json file needed using dates successfully.
+	/**
+	 * Check if it is a single digit. Used for parsing air quality data by matching up the format in the webserver to access the json file needed using dates successfully.
+	 * @param number A number of type int.
+	 * @return True if it is a single digit. Otherwise, return false.
+	 */
 	private static boolean isSingleDigit(int number) {
 		return number < 10;
 	}
@@ -163,7 +209,7 @@ public class App
 	public static Point getStartPoint() {
 		return startPoint;
 	}
-	public static int randomSeed() {
+	public static int getRandomSeed() {
 		return randomSeed;
 	}
 	
@@ -174,73 +220,36 @@ public class App
 	
 	
 	
-	public static void createOrAppendToFile(String StringtoAdd, String filename, boolean isNewFile) throws IOException {
-		FileWriter myWriter;
-		if(isNewFile) {
-			myWriter = new FileWriter(filename);
-		}
-		else {
-			var appendToExistingFile = true;
-			myWriter = new FileWriter(filename, appendToExistingFile);
-		}
-    	myWriter.write(StringtoAdd);
-    	myWriter.close();
-    	if (isNewFile) {
-        	System.out.println("Successfully created " + filename + " file.");
-    	}
-    	
-	}
-	
 
     public static void main(String[] args)
     {
     	//Initialisation Phase: Check the arguments are in the correct format and initialise the variables.
-        checkNumberOfArguments(args); 
+    	checkNumOfArguments(args); 
         App app = new App(args);
         
     	//Parse data from webserver that contains information on the location of the sensors we have to visit on that day
-		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber());
 
-		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
     	//Initialise a new Drone object, by passing in the starting location and the list of sensors to visit.
-    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
-    	DroneControl dControl = new DroneControl(drone);
+		Sensor[] listOfSensors = JsonParser.parseAirQualityData(App.getPortNumber());
+		NoFlyZone restrictedAreas = JsonParser.parseNoFlyZones(App.getPortNumber()); 
+
+		
+        Drone drone = new Drone(App.getStartPoint(), listOfSensors, restrictedAreas);
     	boolean recordFlight = true;
-    	var path = drone.returnCompletePath(recordFlight);
+    	List<Point> path = drone.returnCompletePath(recordFlight);
     	
     	GeoJsonDeserialiser.createGeoJSONMapReadings(path, listOfSensors);
 
     	
     	
     	
-    	//Testing
-		
-//		RoutePlanner t = new RoutePlanner(App.getStartPoint(),listOfSensors);
-//    	System.out.println(Arrays.toString(t.generateRoute()));
-//    	System.out.println(t.calculateTourCost(t.gettourIndex()));
-//    	
-//    	
-//    	
-////    	//Parse Information from the webserver to the respective class objects from Json/GeoJson Strings.
-//		What3WordsDetails w3waddress = JsonParser.parseWhat3WordsDetails(App.getPortNumber(), "slips/mass/baking"); 
-//		NoFlyZone offLimitZones = JsonParser.parseNoFlyZones(App.getPortNumber()); 
-//    	Drone drone = new Drone(App.getStartPoint(), listOfSensors, offLimitZones);
-////    	DroneControl dControl = new DroneControl(drone);
-////    	dControl.generatePath(App.getStartPoint(),listOfSensors[t.gettourIndex()[1]].locateSensorCoordinates());
-////    	var path = dControl.getPathOfCurrentMovement();
-//    	var path = drone.returnCompletePath();
-//
-////    	var path = drone.returnCompletePath();
-////    	for (Point p : path) {
-////    		System.out.println("Lng " + p.longitude() +  " ;Lat " + p.latitude());
-////    	}
+ 
     	
     	System.out.println(path.size());
     	System.out.println(drone.getCompleteDirections().size());
     	System.out.println(drone.getCurrentNumberOfMoves());
     	System.out.println(drone.getCurrentNumberOfMoves() +34);
 
-    	
     	
     
        

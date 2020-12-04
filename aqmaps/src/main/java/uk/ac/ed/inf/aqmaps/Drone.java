@@ -13,7 +13,6 @@ public class Drone {
 	private int predictedMoveCount = 0; //Keeps track of the number of moves it will make. - Updated after DroneControl generates a path.
 	private int numberOfMovesTaken = 0; //Keeps track of the number of moves it made. - Used for logging flight path and to emulate drone movement
 
-	private final double MOVE_LENGTH = 0.0003; //Length of a move in degrees
 	private final int MAXIMUM_MOVES = 150; //The flight path of a drone is at most 150 moves in total. 
 	private NoFlyZone restrictedAreas;
 	private int[] droneTourSpots;
@@ -25,12 +24,15 @@ public class Drone {
 	
 	
 	
-	public Drone(Point start, Sensor[] sensors, NoFlyZone noZones) {
+	public Drone(Point start, Sensor[] sensors, NoFlyZone offLimitZones) {
 		startingPoint = start;
 		listOfSensors = sensors;
-		restrictedAreas = noZones;
+		restrictedAreas = offLimitZones;
+		
+		List<Point> sensorPoints = getAllSensorPoints();
+
 		//Given the starting point, the drone should find the estimated best route it should take
-		var routeAlgorithm = new RoutePlanner(start, sensors);
+		var routeAlgorithm = new RoutePlanner(start, sensorPoints);
 		//Calculate the best path and return it, includes the starting point which is at index 0.
 		droneTourSpots =  routeAlgorithm.generateRoute();
 		droneCompletePath = new ArrayList<Point>();
@@ -41,7 +43,7 @@ public class Drone {
 	public List<Point> returnCompletePath(boolean recordFlight){
 		//Initialise our droneControl class to start navigating around obstacles 
 		//to get to each destination point (whether sensor or final end position which is our starting point).
-		var droneController = new DroneControl(this);
+		var droneController = new DronePathing(this);
 		//At the start calculate the path from start point to first sensor
 		registerNewPathingInfo(droneController, startingPoint, getSensorCoordinatesInTour(firstSensorInTour), firstSensorInTour, recordFlight);
 		var droneNewPoint = droneCompletePath.get(droneCompletePath.size()-1);
@@ -53,8 +55,10 @@ public class Drone {
 		registerNewPathingInfo(droneController, droneNewPoint, startingPoint, droneTourSpots.length, recordFlight);
 		return droneCompletePath;
 	}
+	
+	
 	//TourNumber == 34 represents the starting point, which is also our end goal as we are interested in going back to the starting point at the end of our sensor tour.
-	private void registerNewPathingInfo(DroneControl droneController,Point pointA, Point pointB, int tourNumber, boolean recordFlight) {
+	private void registerNewPathingInfo(DronePathing droneController,Point pointA, Point pointB, int tourNumber, boolean recordFlight) {
 		droneController.generatePath(pointA, pointB);
 		List<Point> path = droneController.getPathOfCurrentMovement(); 	//TODO: Handle null errors here
 
@@ -97,6 +101,14 @@ public class Drone {
 		return getSensorInTour(currentTourIndex).locateSensorCoordinates();
 	}
 	
+	public List<Point> getAllSensorPoints(){
+		var sensorPoints = new ArrayList<Point>(listOfSensors.length);
+		for (Sensor sensor: listOfSensors) {
+			sensorPoints.add(sensor.locateSensorCoordinates());
+		}
+		return sensorPoints;
+	}
+	
 	
 	//TODO: Check null exception for battery? What do we use sensor readings for?
 	public Float readSensor(Sensor sensor) {
@@ -114,15 +126,7 @@ public class Drone {
 	}
 	
 	
-	
-	
-	
-	public void addPredictedMoveCount(int moves) {
-		predictedMoveCount = predictedMoveCount + moves;
-	}
-	
-	
-	
+
 	
 	public void recordFlightPath(int moveCount, Point pointOnPath, Point nextPointOnPath, int directionAngle, String sensorLocation) {
 		//Get coordinates information
@@ -138,7 +142,7 @@ public class Drone {
 		try {
 			//For the first iteration, a new file will be created and the text will be added to it. 
 			//After that, new calls to the function to record flight path will result in appending new lines of text to it.
-			App.createOrAppendToFile(text, filename, createNewFile);
+			FileUtilities.createOrAppendToFile(text, filename, createNewFile);
 			//After the first creation of file, set file to be false in order not to overwrite old changes.
 			setNewFileCreationStatus(false); 	
 
@@ -148,6 +152,13 @@ public class Drone {
 			System.exit(-1); //Unsuccessful termination of program
 		}
 	}
+	
+
+	public void addPredictedMoveCount(int moves) {
+		predictedMoveCount = predictedMoveCount + moves;
+	}
+	
+	
 
 	
 	public int getCurrentNumberOfMoves() {

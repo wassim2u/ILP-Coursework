@@ -69,6 +69,34 @@ public class NoFlyZone {
 		return true;
 	}
 	
+//	public boolean checkOutsideOffLimitAreas(Point point) {
+//		var features = noFlyZonesCollection.features();
+//		for (Feature f: features) {
+//			if (f.geometry() instanceof Polygon) {
+//				Polygon polygonOutline =(Polygon) f.geometry();
+//				 //Index 0 will give us List<Points> that we need. 
+//				List<Point> polygonPoints = polygonOutline.coordinates().get(0); 
+//				//Initialise the polygon for java.awt.Polygon type
+//				java.awt.Polygon polygonAwtType = new java.awt.Polygon();
+//				
+//				for (int i=0; i<polygonPoints.size(); i++) {
+//					polygonAwtType.addPoint(polygonPoints.get(i).latitude(), polygonPoints.get(i).longitude());
+//				}
+//				
+//					var lineBetweenTwoPolygonPoints = new Line2D.Double(pointA.latitude(),pointA.longitude(),
+//														pointB.latitude(),pointB.longitude());
+//					if (linePath.intersectsLine(lineBetweenTwoPolygonPoints)) {
+//						return false;
+//					}
+//				}
+//			
+//			
+//		}
+//		//If no intersection if found at the end of the execution of this function, return true, m
+//		return true;
+//	}
+	
+	
 	
 }
 

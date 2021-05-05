@@ -4,7 +4,7 @@
 
 The repository contains two folders, _aqmaps_ and _heatmap_ for the two separate marked courseworks for the **Informatics Large Practical** Course. The bulk of the semester was spent on aqmaps for implementing a drone route planner algorithm. Achieved **89%** overall in the course.
 
- - _heatmap_: 23/25 - Visualising a “heat map” over the drone confinement area through Geo-JSON maps.
+ - _heatmap_: 23/25 - Visualising a “heat map” over the drone confinement area through Geo-JSON maps. The heatmap is used to visualise predictions for the highest sensor reading which will be seen in each area of the drone confinement area, partitioned into a regular 10×10 grid. The input is a text file with 10 lines of text, each of which has 10 integer values separated by commas(See the example file predictions.txt under heatmap folder).
   
  - _aqmap_: 66/75 - The task is to program an autonomous drone which will collect readings from air quality sensors distributed around an urban geographical area as part of a (fictitious) research project to analyse urban air quality. The drone must reach all required sensors in a map in a given area provided some constraints including the number of maximal movements allowed and while avoiding no-fly-zones, areas which the drone is not allowed to cross.
 

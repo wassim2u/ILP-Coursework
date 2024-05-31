@@ -1,5 +1,6 @@
 # Planner System for Autonomous Drone Collecting Sensor Readings in a Map
 
+![](./README_figures/ILP-Example.png)
 
 
 The repository contains two folders, _aqmaps_ and _heatmap_ for the two separate marked courseworks for the **Informatics Large Practical** Course. The bulk of the semester was spent on aqmaps for implementing a drone route planner algorithm. Achieved **89%** overall in the course.
@@ -23,3 +24,9 @@ buildings folders. You can check the web server is running by visiting the addre
 - _words_ folder: The folder contains JSON files which give the What3Words information corresponding to a What3Words address. The details for a What3Words address "first.second.third" will be stored in the file words/first/second/third/details.json.
 
 - _buildings_ folder: Within the confinement area are four regions where the drone is not allowed to fly. These four regions are known as the No Fly Zones for the drone. The details of the No Fly Zones are given in the file buildings/no-fly-zones.geojson. This file is in Geo-JSON format, which was used as a way to encode geographic data structures.
+
+
+## Architecture 
+
+![](./README_figures/SoftwareArchitecture-Structure.png)
+Software Architecture - The structure of the drone program
